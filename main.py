@@ -33,11 +33,11 @@ print("--- GENERATED LINKEDIN POST ---")
 print(post_content)
 print("-------------------------------")
 
-# 3. Send post to Buffer queue via modern GraphQL API
+# 3. Send post to Buffer queue via official GraphQL API
 if buffer_api_key and profile_id:
     url = "https://api.buffer.com"
     
-    # Clean GraphQL mutation compatible with Buffer's API
+    # Correct GraphQL mutation layout based on Buffer docs
     query = f"""
     mutation {{
       createPost(input: {{
@@ -46,7 +46,16 @@ if buffer_api_key and profile_id:
         schedulingType: automatic
         mode: addToQueue
       }}) {{
-        __typename
+        ... on PostActionSuccess {{
+          post {{
+            id
+            text
+            status
+          }}
+        }}
+        ... on MutationError {{
+          message
+        }}
       }}
     }}
     """
@@ -60,9 +69,9 @@ if buffer_api_key and profile_id:
     print("Buffer Response Status:", response.status_code)
     print("Buffer Response Body:", response.text)
     
-    if response.status_code == 200 and "errors" not in response.json():
+    if response.status_code == 200 and "PostActionSuccess" in response.text:
         print("Successfully pushed post to your Buffer LinkedIn queue!")
     else:
-        print("Buffer API Error detected.")
+        print("Buffer API Error detected above.")
 else:
     print("CRITICAL: Buffer keys are missing from GitHub Secrets.")

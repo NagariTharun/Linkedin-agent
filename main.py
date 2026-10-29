@@ -33,23 +33,36 @@ print("--- GENERATED LINKEDIN POST ---")
 print(post_content)
 print("-------------------------------")
 
-# 3. Send post to Buffer queue via standard REST API
+# 3. Send post to Buffer queue via modern GraphQL API
 if buffer_api_key and profile_id:
-    url = "https://api.bufferapp.com/1/updates/create.json"
-    payload = {
-        "text": post_content,
-        "profile_ids": [profile_id],
-        "access_token": buffer_api_key,
-        "sharing_mode": "queue"
+    url = "https://api.buffer.com"
+    
+    # Clean GraphQL mutation compatible with Buffer's API
+    query = f"""
+    mutation {{
+      createPost(input: {{
+        text: {repr(post_content)}
+        channelId: "{profile_id}"
+        schedulingType: automatic
+        mode: addToQueue
+      }}) {{
+        __typename
+      }}
+    }}
+    """
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {buffer_api_key}"
     }
     
-    response = requests.post(url, data=payload)
+    response = requests.post(url, json={"query": query}, headers=headers)
     print("Buffer Response Status:", response.status_code)
     print("Buffer Response Body:", response.text)
     
-    if response.status_code == 200:
+    if response.status_code == 200 and "errors" not in response.json():
         print("Successfully pushed post to your Buffer LinkedIn queue!")
     else:
-        print("Buffer API Error above.")
+        print("Buffer API Error detected.")
 else:
     print("CRITICAL: Buffer keys are missing from GitHub Secrets.")

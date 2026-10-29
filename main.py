@@ -33,44 +33,51 @@ print("--- GENERATED LINKEDIN POST ---")
 print(post_content)
 print("-------------------------------")
 
-# 3. Send post to Buffer queue via official GraphQL API
+# 3. Send post to Buffer queue via official GraphQL API endpoint
 if buffer_api_key and profile_id:
     url = "https://api.buffer.com"
     
-    # Correct GraphQL mutation layout based on Buffer docs
-    query = f"""
-    mutation {{
-      createPost(input: {{
-        text: {repr(post_content)}
-        channelId: "{profile_id}"
-        schedulingType: automatic
-        mode: addToQueue
-      }}) {{
-        ... on PostActionSuccess {{
-          post {{
+    query = """
+    mutation CreatePost($input: CreatePostInput!) {
+      createPost(input: $input) {
+        ... on PostActionSuccess {
+          post {
             id
             text
-            status
-          }}
-        }}
-        ... on MutationError {{
+          }
+        }
+        ... on MutationError {
           message
-        }}
-      }}
-    }}
+        }
+      }
+    }
     """
+    
+    variables = {
+        "input": {
+            "text": post_content,
+            "channelId": profile_id,
+            "schedulingType": "automatic",
+            "mode": "addToQueue"
+        }
+    }
     
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {buffer_api_key}"
     }
     
-    response = requests.post(url, json={"query": query}, headers=headers)
+    response = requests.post(url, json={"query": query, "variables": variables}, headers=headers)
     print("Buffer Response Status:", response.status_code)
     print("Buffer Response Body:", response.text)
     
-    if response.status_code == 200 and "PostActionSuccess" in response.text:
-        print("Successfully pushed post to your Buffer LinkedIn queue!")
+    res_data = response.json()
+    if response.status_code == 200 and "errors" not in res_data:
+        create_res = res_data.get("data", {}).get("createPost", {})
+        if "message" in create_res:
+            print("Buffer API Error Message:", create_res["message"])
+        else:
+            print("Successfully pushed post to your Buffer LinkedIn queue!")
     else:
         print("Buffer API Error detected above.")
 else:

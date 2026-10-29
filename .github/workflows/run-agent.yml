@@ -1,9 +1,9 @@
 name: Daily LinkedIn Post Generator
 
 on:
-  workflow_dispatch: # Allows you to click a button to test it manually anytime!
+  workflow_dispatch:
   schedule:
-    - cron: '0 9 * * *' # Runs every day at 9:00 AM UTC automatically
+    - cron: '0 9 * * *'
 
 jobs:
   run-agent:
@@ -24,6 +24,6 @@ jobs:
 
       - name: Run AI Agent
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
           python main.py

@@ -14,13 +14,13 @@ print(f"DEBUG -> Buffer Profile ID Present: {bool(profile_id)}")
 if not groq_api_key:
     raise ValueError("GROQ_API_KEY is missing!")
 
-# 2. Generate post using Groq
+# 2. Generate post using Groq (Balanced mix of Tech, Automation, & ServiceNow)
 groq_client = Groq(api_key=groq_api_key)
 prompt = (
-    "Write a high-engagement, professional LinkedIn post about "
-    "tech career growth, automation, or productivity tips. "
+    "Write a high-engagement, professional LinkedIn post that covers a balanced mix of "
+    "tech career growth, automation, ServiceNow development, and emerging technologies (like GenAI, cloud, or DevOps). "
     "Include a strong hook, 3 short paragraphs of value, "
-    "and 4 professional hashtags."
+    "a call-to-action question at the end, and 4 relevant hashtags like #ServiceNow #TechTrends #Automation #CareerGrowth."
 )
 
 completion = groq_client.chat.completions.create(
@@ -33,43 +33,23 @@ print("--- GENERATED LINKEDIN POST ---")
 print(post_content)
 print("-------------------------------")
 
-# 3. Send post to Buffer queue using the modern GraphQL API endpoint
+# 3. Send post to Buffer queue via standard REST API
 if buffer_api_key and profile_id:
-    url = "https://api.buffer.com"
-    query = f"""
-    mutation {{
-      createPost(input: {{
-        text: {repr(post_content)}
-        channelId: "{profile_id}"
-        schedulingType: automatic
-        mode: addToQueue
-      }}) {{
-        ... on PostActionSuccess {{
-          post {{
-            id
-            text
-            status
-          }}
-        }}
-        ... on Error {{
-          message
-        }}
-      }}
-    }}
-    """
-    
-    headers = {
-        "Content-Type": "application/json",
-        "Authorization": f"Bearer {buffer_api_key}"
+    url = "https://api.bufferapp.com/1/updates/create.json"
+    payload = {
+        "text": post_content,
+        "profile_ids": [profile_id],
+        "access_token": buffer_api_key,
+        "sharing_mode": "queue"
     }
     
-    response = requests.post(url, json={"query": query}, headers=headers)
+    response = requests.post(url, data=payload)
     print("Buffer Response Status:", response.status_code)
     print("Buffer Response Body:", response.text)
     
-    if response.status_code == 200 and "createPost" in response.text:
+    if response.status_code == 200:
         print("Successfully pushed post to your Buffer LinkedIn queue!")
     else:
-        print("Buffer API Error details above.")
+        print("Buffer API Error above.")
 else:
     print("CRITICAL: Buffer keys are missing from GitHub Secrets.")

@@ -1,6 +1,7 @@
 import os
 from groq import Groq
 
+# Grab the Groq API key securely from GitHub Secrets
 api_key = os.environ.get("GROQ_API_KEY")
 
 if not api_key:
@@ -15,14 +16,14 @@ def generate_linkedin_post():
         "Include a strong hook, 3 short paragraphs of value, "
         "a call-to-action question at the end, and 4 professional hashtags."
     )
-
+    
     completion = client.chat.completions.create(
-        model="llama-3.1-8b-instant",
+        model="openai/gpt-oss-20b",
         messages=[
             {"role": "user", "content": prompt}
         ],
     )
-
+    
     print("--- GENERATED LINKEDIN POST (VIA GROQ) ---")
     print(completion.choices[0].message.content)
     print("------------------------------------------")

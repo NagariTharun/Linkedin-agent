@@ -1,13 +1,13 @@
 import os
-from google import genai
+from groq import Groq
 
-# Grab the Gemini API key securely from GitHub
-api_key = os.environ.get("GEMINI_API_KEY")
+# Grab the Groq API key securely from GitHub Secrets
+api_key = os.environ.get("GROQ_API_KEY")
 
 if not api_key:
-    raise ValueError("GEMINI_API_KEY is missing! Please add it to GitHub Secrets.")
+    raise ValueError("GROQ_API_KEY is missing! Please add it to GitHub Secrets.")
 
-client = genai.Client(api_key=api_key)
+client = Groq(api_key=api_key)
 
 def generate_linkedin_post():
     prompt = (
@@ -17,14 +17,16 @@ def generate_linkedin_post():
         "a call-to-action question at the end, and 4 professional hashtags."
     )
 
-    response = client.models.generate_content(
-        model='gemini-3.8-flash',
-        contents=prompt,
+    completion = client.chat.completions.create(
+        model="llama-3.3-70b-versatile",
+        messages=[
+            {"role": "user", "content": prompt}
+        ],
     )
 
-    print("--- GENERATED LINKEDIN POST ---")
-    print(response.text)
-    print("-------------------------------")
+    print("--- GENERATED LINKEDIN POST (VIA GROQ) ---")
+    print(completion.choices[0].message.content)
+    print("------------------------------------------")
 
 if __name__ == "__main__":
     generate_linkedin_post()

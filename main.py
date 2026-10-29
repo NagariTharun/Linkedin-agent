@@ -7,6 +7,10 @@ groq_api_key = os.environ.get("GROQ_API_KEY")
 buffer_api_key = os.environ.get("BUFFER_API_KEY")
 profile_id = os.environ.get("BUFFER_PROFILE_ID")
 
+print(f"DEBUG -> Groq Key Present: {bool(groq_api_key)}")
+print(f"DEBUG -> Buffer API Key Present: {bool(buffer_api_key)}")
+print(f"DEBUG -> Buffer Profile ID Present: {bool(profile_id)}")
+
 if not groq_api_key:
     raise ValueError("GROQ_API_KEY is missing!")
 
@@ -29,19 +33,43 @@ print("--- GENERATED LINKEDIN POST ---")
 print(post_content)
 print("-------------------------------")
 
-# 3. Send post to Buffer queue
+# 3. Send post to Buffer queue using the modern GraphQL API endpoint
 if buffer_api_key and profile_id:
-    url = "https://api.bufferapp.com/1/updates/create.json"
-    payload = {
-        "text": post_content,
-        "profile_ids": [profile_id],
-        "access_token": buffer_api_key,
-        "sharing_mode": "queue"
+    url = "https://api.buffer.com"
+    query = f"""
+    mutation {{
+      createPost(input: {{
+        text: {repr(post_content)}
+        channelId: "{profile_id}"
+        schedulingType: automatic
+        mode: addToQueue
+      }}) {{
+        ... on PostActionSuccess {{
+          post {{
+            id
+            text
+            status
+          }}
+        }}
+        ... on Error {{
+          message
+        }}
+      }}
+    }}
+    """
+    
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {buffer_api_key}"
     }
-    response = requests.post(url, data=payload)
-    if response.status_code == 200:
+    
+    response = requests.post(url, json={"query": query}, headers=headers)
+    print("Buffer Response Status:", response.status_code)
+    print("Buffer Response Body:", response.text)
+    
+    if response.status_code == 200 and "createPost" in response.text:
         print("Successfully pushed post to your Buffer LinkedIn queue!")
     else:
-        print("Buffer API Error:", response.text)
+        print("Buffer API Error details above.")
 else:
-    print("Buffer keys not found, skipping auto-queue.")
+    print("CRITICAL: Buffer keys are missing from GitHub Secrets.")

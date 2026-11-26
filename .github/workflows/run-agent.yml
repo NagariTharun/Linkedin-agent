@@ -1,9 +1,9 @@
-name: Daily LinkedIn Post Generator
+name: Weekly LinkedIn Post Generator
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 4 * * 2,3,4'  # Runs every Tuesday, Wednesday, and Thursday at 4:30 AM UTC (10:00 AM IST)
+    - cron: '30 4 * * 2'  # Runs once a week: Tuesday at 4:30 AM UTC (10:00 AM IST)
 
 jobs:
   run-agent:
@@ -20,7 +20,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run AI Agent
+      - name: Run Weekly Post Agent
         run: python main.py
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}

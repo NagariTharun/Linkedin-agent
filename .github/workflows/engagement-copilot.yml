@@ -1,0 +1,48 @@
+name: LinkedIn Connection & Comment Copilot
+
+on:
+  workflow_dispatch:
+    inputs:
+      task_mode:
+        description: 'Choose task: connection (screen invite + greeting) or comment (draft reply)'
+        required: true
+        type: choice
+        default: 'connection'
+        options:
+          - connection
+          - comment
+      person_name:
+        description: 'First name of the connection or commenter'
+        required: false
+        default: ''
+      input_text:
+        description: 'Paste their headline/bio (for connection) OR their comment (for comment)'
+        required: true
+      post_context:
+        description: 'Optional: brief topic of your post (only needed for comment replies)'
+        required: false
+        default: 'ServiceNow, automation, and tech career growth'
+
+jobs:
+  copilot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Engagement Copilot
+        run: python engage.py
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TASK_MODE: ${{ inputs.task_mode }}
+          PERSON_NAME: ${{ inputs.person_name }}
+          INPUT_TEXT: ${{ inputs.input_text }}
+          POST_CONTEXT: ${{ inputs.post_context }}

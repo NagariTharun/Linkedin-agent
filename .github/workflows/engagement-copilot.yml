@@ -11,6 +11,15 @@ on:
         options:
           - connection
           - comment
+      greeting_tone:
+        description: 'Tone for greeting or comment reply'
+        required: true
+        type: choice
+        default: 'peer'
+        options:
+          - peer
+          - recruiter
+          - formal
       person_name:
         description: 'First name of the connection or commenter'
         required: false
@@ -43,6 +52,7 @@ jobs:
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           TASK_MODE: ${{ inputs.task_mode }}
+          GREETING_TONE: ${{ inputs.greeting_tone }}
           PERSON_NAME: ${{ inputs.person_name }}
           INPUT_TEXT: ${{ inputs.input_text }}
           POST_CONTEXT: ${{ inputs.post_context }}
